@@ -1,11 +1,12 @@
 repeat wait() until game:IsLoaded()
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+-- Скачиваем стабильный и обновленный форк Orion Library
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/main/source')))()
 
 -- Создаем главное окно
 local Window = OrionLib:MakeWindow({
     Name = "Animal Hospital Script 🐾", 
-    HidePremium = false, 
+    HidePremium = true, 
     SaveConfig = false, 
     IntroText = "Loading Animal Hospital Hub..."
 })
@@ -17,11 +18,12 @@ local AuthTab = Window:MakeTab({
     PremiumOnly = false
 })
 
--- Ссылка на твой Дискорд
 local discordLink = "https://discord.com/channels/1524036881057189889/1524036994085425235/1524038305753202810"
+local enteredKey = "" -- Сюда сохраняется то, что ввел игрок
 
-AuthTab:AddParagraph("Добро пожаловать!", "Для доступа к читу введите ключ. Его можно получить бесплатно в нашем Discord сервере.")
+AuthTab:AddParagraph("Добро пожаловать!", "Для доступа к функциям скопируйте ссылку на Discord, заберите ключ и введите его ниже.")
 
+-- Кнопка скопировать ссылку
 AuthTab:AddButton({
     Name = "🔗 Получить Ключ (Скопировать ссылку)",
     Callback = function()
@@ -32,28 +34,38 @@ AuthTab:AddButton({
         end
         OrionLib:MakeNotification({
             Name = "Успешно!",
-            Content = "Ссылка на Discord скопирована в буфер обмена! Вставьте её в браузер (Ctrl+V)",
+            Content = "Ссылка на Discord скопирована! Вставьте в браузер (Ctrl+V)",
             Image = "rbxassetid://4483362458",
-            Time = 5
+            Time = 4
         })
     end
 })
 
--- Переменные для вкладок с функциями (пока не ввели ключ, они закрыты)
+-- Поле ввода
+AuthTab:AddTextbox({
+    Name = "Введите ключ:",
+    Default = "",
+    TextDisappear = false,
+    Callback = function(Value)
+        enteredKey = Value
+    end
+})
+
+-- Переменные для будущих вкладок
 local MainTab = nil
 local VisualsTab = nil
 local ESP_Enabled = false
 
--- Функция, которая открывает чит после правильного ключа
+-- Функция разблокировки скрипта
 local function UnlockScript()
     OrionLib:MakeNotification({
         Name = "Доступ разрешен!",
-        Content = "Приятной игры в Animal Hospital!",
+        Content = "Приятной игры!",
         Image = "rbxassetid://4483362458",
-        Time = 5
+        Time = 4
     })
 
-    -- 1. Создаем вкладку "Главная"
+    -- Создаем вкладку "Главная"
     MainTab = Window:MakeTab({
         Name = "Главная",
         Icon = "rbxassetid://4483362458",
@@ -76,17 +88,16 @@ local function UnlockScript()
         end    
     })
 
-    -- 2. Создаем вкладку "Визуалы (ESP)"
+    -- Создаем вкладку "Визуалы (ESP)"
     VisualsTab = Window:MakeTab({
         Name = "Визуалы (ESP)",
         Icon = "rbxassetid://4483362458",
         PremiumOnly = false
     })
 
-    -- Функция создания ESP
+    -- Логика ESP
     local function ApplyESP(npc)
         if not npc:IsA("Model") or not npc:FindFirstChild("HumanoidRootPart") then return end
-        
         if npc.HumanoidRootPart:FindFirstChild("NPC_ESP_Billboard") then
             npc.HumanoidRootPart.NPC_ESP_Billboard:Destroy()
         end
@@ -106,9 +117,7 @@ local function UnlockScript()
         textLabel.TextStrokeTransparency = 0
         textLabel.Parent = billboard
 
-        -- Логика проверки на Аномалию
         local isAnomaly = false
-        
         local config = npc:FindFirstChild("Values") or npc:FindFirstChild("Configuration") or npc:FindFirstChild("Settings")
         if config then
             for _, v in pairs(config:GetChildren()) do
@@ -117,7 +126,6 @@ local function UnlockScript()
                 end
             end
         end
-        
         if npc:GetAttribute("IsAnomaly") == true or string.find(string.lower(npc.Name), "anomaly") or string.find(string.lower(npc.Name), "monster") then
             isAnomaly = true
         end
@@ -129,7 +137,6 @@ local function UnlockScript()
             textLabel.Text = "🟢 НОРМАЛЬНЫЙ"
             textLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
         end
-        
         billboard.Enabled = ESP_Enabled
     end
 
@@ -141,7 +148,6 @@ local function UnlockScript()
         end
     end
 
-    -- Переключатель ESP
     VisualsTab:AddToggle({
         Name = "Включить ESP на NPC",
         Default = false,
@@ -159,7 +165,6 @@ local function UnlockScript()
         end
     })
 
-    -- Слежка за новыми NPC
     game.Workspace.DescendantAdded:Connect(function(descendant)
         if ESP_Enabled and descendant:IsA("Model") and descendant:FindFirstChild("Humanoid") then
             task.wait(0.7)
@@ -168,20 +173,18 @@ local function UnlockScript()
     end)
 end
 
--- Поле ввода ключа
-AuthTab:AddTextbox({
-    Name = "Введи ключ сюда:",
-    Default = "",
-    TextDisappear = true,
-    Callback = function(Value)
-        if Value == "ilovepigs" then
+-- Кнопка проверки ключа
+AuthTab:AddButton({
+    Name = "✅ Проверить ключ",
+    Callback = function()
+        if enteredKey == "ilovepigs" then
             UnlockScript()
         else
             OrionLib:MakeNotification({
                 Name = "Ошибка!",
                 Content = "Неверный ключ! Попробуйте еще раз.",
                 Image = "rbxassetid://4483362458",
-                Time = 4
+                Time = 3
             })
         end
     end
